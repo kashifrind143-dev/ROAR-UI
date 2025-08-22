@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark galaxy background */
+body {
+  background: radial-gradient(1100px 800px at 50% 20%, #0b1a2a 12%, #05070a 60%),
+              radial-gradient(900px 900px at 80% 80%, rgba(20, 0, 50, .5), transparent 60%),
+              linear-gradient(180deg, #0b0b0f, #0d0e13);
+}
+
+/* Orbit rings (subtle) */
+.orbits::before{
+  content:""; position:absolute; inset:-35% -15% -15% -15%;
+  background:
+    radial-gradient(closest-side, transparent 90%, rgba(34,211,238,.09) 92%, transparent 94%) 50% 50%/82% 82% no-repeat,
+    radial-gradient(closest-side, transparent 90%, rgba(34,211,238,.07) 92%, transparent 94%) 50% 50%/68% 68% no-repeat,
+    radial-gradient(closest-side, transparent 90%, rgba(34,211,238,.06) 92%, transparent 94%) 50% 50%/54% 54% no-repeat,
+    radial-gradient(closest-side, transparent 90%, rgba(34,211,238,.05) 92%, transparent 94%) 50% 50%/40% 40% no-repeat;
+  pointer-events:none; filter: blur(.2px);
+}
+.planet { filter: blur(0.2px); opacity: .9 }
+
+.glass { @apply bg-white/5 backdrop-blur-xl border border-white/10; }
