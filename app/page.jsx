@@ -2,8 +2,10 @@
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { WalletIcon, ChallengeIcon, MiningIcon, FriendsIcon, ProfileIcon, LeaderboardIcon } from "../components/Icons";
+import WalletModal from "../components/WalletModal";
 
 export default function Page(){
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [username, setUsername] = useState("IVANNIKOV.PRO");
   const [avatarUrl, setAvatarUrl] = useState("/avatar.png");
   const [totalPoints, setTotalPoints] = useState(1273.926);
@@ -14,14 +16,20 @@ export default function Page(){
     return s ? parseInt(s) : 0;
   });
 
-  // Mock user fetch
-  useEffect(()=>{
-    fetch("/api/user").then(r=>r.json()).then(({user})=>{
-      setUsername(user.username);
-      setAvatarUrl(user.profilePic);
-      setTotalPoints(user.totalPoints);
-    });
-  },[]);
+  useEffect(() => {
+    if (window.Telegram && window.Telegram.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      const user = tg.initDataUnsafe?.user;
+      if (user) {
+        setUsername(user.username || "Unknown User");
+        // Note: Telegram does not directly provide a profile picture URL.
+        // You might need a backend service to fetch it using the user ID.
+        // For now, we'll keep the default avatar.
+        // setAvatarUrl(user.photo_url);
+      }
+    }
+  }, []);
 
   const FOUR_HOURS = 4*60*60*1000;
   const now = Date.now();
@@ -67,9 +75,11 @@ export default function Page(){
     <div className="min-h-screen text-white relative overflow-hidden">
       {/* Background orbit and planets (subtle like first mockup) */}
       <div className="absolute inset-0 orbits">
-        <div className="absolute left-6 top-36 w-6 h-6 rounded-full bg-orange-400/80 planet animate-floaty"></div>
-        <div className="absolute right-10 top-64 w-3 h-3 rounded-full bg-fuchsia-400/80 planet animate-floaty" style={{animationDelay:"-1.5s"}}></div>
-        <div className="absolute right-6 bottom-56 w-8 h-8 rounded-full bg-cyan-400/70 planet animate-floaty" style={{animationDelay:"-2.4s"}}></div>
+        <div className="absolute left-6 top-36 w-6 h-6 rounded-full bg-neon-orange/80 planet animate-floaty animate-glowPulse"></div>
+        <div className="absolute right-10 top-64 w-3 h-3 rounded-full bg-neon-purple/80 planet animate-floaty animate-glowPulse" style={{animationDelay:"-1.5s"}}></div>
+        <div className="absolute right-6 bottom-56 w-8 h-8 rounded-full bg-neon-blue/70 planet animate-floaty animate-glowPulse" style={{animationDelay:"-2.4s"}}></div>
+        <div className="absolute left-20 bottom-20 w-4 h-4 rounded-full bg-neon-purple/70 planet animate-floaty animate-glowPulse" style={{animationDelay:"-3s"}}></div>
+        <div className="absolute right-1/4 top-1/4 w-5 h-5 rounded-full bg-neon-orange/70 planet animate-floaty animate-glowPulse" style={{animationDelay:"-4s"}}></div>
       </div>
 
       {/* Header mimic */}
@@ -102,26 +112,28 @@ export default function Page(){
           animate={{ rotate: [0, 0.8, 0] }}
           transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
         >
-          <svg width={size} height={size}>
+          <svg width={size} height={size} className="dial">
             <defs>
-              <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#0ea5e9" stopOpacity="1"/>
-                <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.2"/>
-              </radialGradient>
+              <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#00BFFF" />
+                <stop offset="100%" stopColor="#22d3ee" />
+              </linearGradient>
             </defs>
             <circle cx={size/2} cy={size/2} r={r} stroke="rgba(255,255,255,.08)" strokeWidth={stroke} fill="rgba(0,0,0,.6)"/>
             <circle cx={size/2} cy={size/2} r={r} stroke="url(#glow)" strokeWidth={stroke} fill="none"
               strokeDasharray={`${dash} ${circ-dash}`} strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`}
-              style={{ filter: "drop-shadow(0 0 12px rgba(43,209,255,.8))" }}
+              style={{ filter: "drop-shadow(0 0 12px rgba(0, 191, 255, .8))" }}
             />
+            <circle cx={size/2} cy={size/2} r={r - 20} stroke="rgba(255,255,255,.08)" strokeWidth="1" fill="none" />
+            <circle cx={size/2} cy={size/2} r={r - 40} stroke="rgba(255,255,255,.08)" strokeWidth="1" fill="none" />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
             <p className="text-white/70 text-sm">In storage:</p>
-            <p className="text-4xl font-extrabold drop-shadow-[0_0_30px_rgba(103,232,249,0.85)]">{storage.toFixed(6)}</p>
+            <p className="text-4xl font-extrabold text-white drop-shadow-[0_0_30px_rgba(0,191,255,0.85)]">{storage.toFixed(6)}</p>
             <div className="mt-2 text-[13px]">
-              <p className="text-cyan-300 font-medium">Balance: <span className="text-white">{balance.toFixed(2)} ROAR</span></p>
+              <p className="text-neon-blue font-medium">Balance: <span className="text-white">{balance.toFixed(2)} ROAR</span></p>
             </div>
-            <p className="mt-1 text-[12px] text-cyan-200/80 tracking-widest">Fill: {remaining>0 ? `${remainingParts.h}H : ${String(remainingParts.m).padStart(2,"0")}M : ${String(remainingParts.s).padStart(2,"0")}S` : "READY"}</p>
+            <p className="mt-1 text-[12px] text-neon-blue/80 tracking-widest">Fill: {remaining>0 ? `${remainingParts.h}H : ${String(remainingParts.m).padStart(2,"0")}M : ${String(remainingParts.s).padStart(2,"0")}S` : "READY"}</p>
           </div>
         </motion.div>
 
@@ -136,7 +148,7 @@ export default function Page(){
           onClick={claim}
           disabled={remaining>0}
           className={`mt-5 w-72 py-3 rounded-2xl font-semibold shadow-glow transition
-            ${remaining>0 ? "bg-slate-700/80 text-white/60" : "bg-sky-600 hover:bg-sky-500 text-white"}`}
+            ${remaining>0 ? "bg-slate-700/80 text-white/60" : "bg-neon-blue hover:bg-neon-blue/80 text-white"}`}
         >
           Claim ROAR
         </motion.button>
@@ -144,31 +156,36 @@ export default function Page(){
 
       {/* Bottom nav - first mockup style but required order */}
       <div className="fixed bottom-6 left-0 right-0 px-5">
-        <div className="mx-auto max-w-sm glass rounded-3xl px-4 py-3 flex items-center justify-between">
+        <div className="mx-auto max-w-sm glass rounded-3xl px-4 py-3 flex items-center justify-around">
+          <motion.div 
+            className="flex flex-col items-center text-white/70 text-[11px]" 
+            onClick={() => setIsWalletModalOpen(true)}
+            whileTap={{ scale: 0.9 }}
+          >
+            <WalletIcon className="mb-1" />
+            <span>Wallet</span>
+          </motion.div>
+          <div className="flex flex-col items-center text-white/70 text-[11px]">
+            <ChallengeIcon className="mb-1" />
+            <span>Boost</span>
+          </div>
+          <div className="relative -mt-8">
+            <div className="w-14 h-14 rounded-full bg-neon-blue/20 border border-neon-blue/50 flex items-center justify-center shadow-glow">
+              <MiningIcon className="text-neon-blue" />
+            </div>
+            <p className="text-center text-[11px] mt-1 text-neon-blue">Mining</p>
+          </div>
+          <div className="flex flex-col items-center text-white/70 text-[11px]">
+            <LeaderboardIcon className="mb-1" />
+            <span>Friends</span>
+          </div>
           <div className="flex flex-col items-center text-white/70 text-[11px]">
             <ProfileIcon className="mb-1" />
             <span>Profile</span>
           </div>
-          <div className="flex flex-col items-center text-white/70 text-[11px]">
-            <LeaderboardIcon className="mb-1" />
-            <span>Leaderboard</span>
-          </div>
-          <div className="relative -mt-8">
-            <div className="w-14 h-14 rounded-full bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center shadow-glow">
-              <MiningIcon className="text-cyan-300" />
-            </div>
-            <p className="text-center text-[11px] mt-1 text-cyan-300">Mining</p>
-          </div>
-          <div className="flex flex-col items-center text-white/70 text-[11px]">
-            <ChallengeIcon className="mb-1" />
-            <span>Challenges</span>
-          </div>
-          <div className="flex flex-col items-center text-white/70 text-[11px]">
-            <WalletIcon className="mb-1" />
-            <span>Wallet</span>
-          </div>
         </div>
       </div>
+      <WalletModal isOpen={isWalletModalOpen} onClose={() => setIsWalletModalOpen(false)} />
     </div>
   );
 }

@@ -34,3 +34,9 @@ export const LeaderboardIcon = (props)=> (
     <path d="M4 14h4v6H4zM10 10h4v10h-4zM16 6h4v14h-4z" stroke="currentColor" strokeWidth="1.3" fill="none"/>
   </svg>
 );
+export const TelegramIcon = (props) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props}>
+    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" fill="#2AABEE"/>
+    <path d="M9.25 12.1l6.3-2.85c.4-.18.7.22.5.6l-1.9 5.7c-.1.3-.3.4-.6.2l-2.1-1.5-1 1c-.1.1-.2.2-.4.2l.2-2.15z" fill="#fff"/>
+  </svg>
+);
