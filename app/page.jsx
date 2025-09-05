@@ -3,14 +3,87 @@ import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { WalletIcon, ChallengeIcon, MiningIcon, FriendsIcon, ProfileIcon, LeaderboardIcon } from "../components/Icons";
 import WalletModal from "../components/WalletModal";
+import { TonConnect } from '@tonconnect/sdk';
 
-export default function Page(){
+export default function Page() {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
-  const [username, setUsername] = useState("IVANNIKOV.PRO");
+  const [username, setUsername] = useState("");
+  const [walletAddress, setWalletAddress] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState("/avatar.png");
-  const [totalPoints, setTotalPoints] = useState(1273.926);
-  const [balance, setBalance] = useState(12.85);
-  const [storage, setStorage] = useState(0.195942);
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [balance, setBalance] = useState(0);
+  const [storage, setStorage] = useState(0);
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(0);
+  const [tonConnect, setTonConnect] = useState(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const connector = new TonConnect({ manifestUrl: 'https://raw.githubusercontent.com/kashifrind143-dev/ROAR-UI/main/public/tonconnect-manifest.json' });
+      setTonConnect(connector);
+
+      connector.onStatusChange(async (wallet) => {
+        setWalletAddress(wallet?.account?.address || null);
+        if (wallet?.account?.address) {
+          try {
+            const response = await fetch(`/api/users?address=${wallet.account.address}`);
+            const data = await response.json();
+
+            if (data?.user) {
+              setUsername(data.user.username);
+              setTotalPoints(data.user.totalPoints);
+              setBalance(data.user.balance);
+              setStorage(data.user.storage);
+              setRemainingTime(data.user.lastClaimTime ? new Date(data.user.lastClaimTime).getTime() - Date.now() : 0);
+            }
+          } catch (error) {
+            console.error('Error fetching user data:', error);
+          }
+        }
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const storedLastClaim = localStorage.getItem("lastClaim");
+    if (storedLastClaim) {
+      const lastClaimTime = parseInt(storedLastClaim, 10);
+      const timeSinceLastClaim = Date.now() - lastClaimTime;
+      const remaining = Math.max(0, 4 * 60 * 60 * 1000 - timeSinceLastClaim);
+      setRemainingTime(remaining);
+    }
+  }, []);
+
+  useEffect(() => {
+    let intervalId;
+    if (remainingTime > 0) {
+      intervalId = setInterval(() => {
+        setRemainingTime((prevTime) => {
+          const newTime = prevTime - 1000;
+          return newTime > 0 ? newTime : 0;
+        });
+      }, 1000);
+    } else {
+      setIsClaiming(false);
+    }
+    return () => clearInterval(intervalId);
+  }, [remainingTime]);
+
+  useEffect(() => {
+    localStorage.setItem("lastClaim", String(Date.now() - (4 * 60 * 60 * 1000 - remainingTime)));
+  }, [remainingTime]);
+
+  useEffect(() => {
+    const storedLastClaim = localStorage.getItem("lastClaim");
+    if (storedLastClaim) {
+      const lastClaimTime = parseInt(storedLastClaim, 10);
+      const timeSinceLastClaim = Date.now() - lastClaimTime;
+      const remaining = Math.max(0, 4 * 60 * 60 * 1000 - timeSinceLastClaim);
+      setRemainingTime(remaining);
+      setIsClaiming(remaining > 0);
+    }
+  }, []);
+
   const [lastClaim, setLastClaim] = useState(() => {
     const s = typeof window !== 'undefined' && window.localStorage.getItem("lastClaim");
     return s ? parseInt(s) : 0;
@@ -29,47 +102,57 @@ export default function Page(){
         // setAvatarUrl(user.photo_url);
       }
     }
+  }, [setUsername]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const username = window.Telegram?.WebApp?.initDataUnsafe?.user?.username;
+      const res = await fetch(`/api/user?username=${username}`);
+      const data = await res.json();
+      if (data?.user) {
+        setUsername(data.user.username);
+      }
+    };
+    fetchUserData();
   }, []);
 
-  const FOUR_HOURS = 4*60*60*1000;
-  const now = Date.now();
-  const nextAt = lastClaim ? lastClaim + FOUR_HOURS : 0;
-  const remaining = Math.max(0, nextAt - now);
-  const remainingParts = useMemo(()=>{
-    const sec = Math.ceil(remaining/1000);
-    const h = Math.floor(sec/3600);
-    const m = Math.floor((sec%3600)/60);
-    const s = sec%60;
-    return {h,m,s};
-  }, [remaining]);
+  const formatTime = (milliseconds) => {
+    const seconds = Math.floor((milliseconds / 1000) % 60);
+    const minutes = Math.floor((milliseconds / (1000 * 60)) % 60);
+    const hours = Math.floor((milliseconds / (1000 * 60 * 60)));
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  };
 
-  useEffect(()=>{
-    const t = setInterval(()=>{}, 1000);
-    return ()=> clearInterval(t);
-  }, []);
+  const claim = () => {
+    if (isClaiming || remainingTime > 0) return;
 
-  const claim = async ()=>{
-    if(remaining>0) return;
-    const res = await fetch("/api/claim", { method:"POST" });
-    const data = await res.json();
-    if(data?.success){
-      setBalance(b=> Number((b + storage).toFixed(6)));
-      setStorage(0);
-      setTotalPoints(t=> Number((t + 10).toFixed(3)));
-      const ts = Date.now();
-      setLastClaim(ts);
-      if (typeof window !== 'undefined') localStorage.setItem("lastClaim", String(ts));
-    }
+    setIsClaiming(true);
+    // Simulate adding 10 Roar Points
+    setTotalPoints((prevPoints) => Number((prevPoints + 10).toFixed(3)));
+
+    // Set the countdown timer to 4 hours
+    const claimTime = Date.now();
+    const endTime = claimTime + 4 * 60 * 60 * 1000;
+    setRemainingTime(endTime - Date.now());
+    localStorage.setItem("lastClaim", claimTime.toString());
   };
 
   // Dial geometry
   const size = 260;
   const stroke = 12;
-  const r = (size - stroke)/2;
-  const circ = 2*Math.PI*r;
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
   const cap = 1.0;
-  const progress = Math.min(1, 1 - remaining/FOUR_HOURS);
+  const progress = Math.min(1, 1 - remainingTime / (4 * 60 * 60 * 1000));
   const dash = circ * progress;
+
+  const connectWallet = async () => {
+    try {
+      tonConnect?.openWallet();
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <div className="min-h-screen text-white relative overflow-hidden">
@@ -122,7 +205,7 @@ export default function Page(){
             <circle cx={size/2} cy={size/2} r={r} stroke="rgba(255,255,255,.08)" strokeWidth={stroke} fill="rgba(0,0,0,.6)"/>
             <circle cx={size/2} cy={size/2} r={r} stroke="url(#glow)" strokeWidth={stroke} fill="none"
               strokeDasharray={`${dash} ${circ-dash}`} strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`}
-              style={{ filter: remaining <= 0 ? "drop-shadow(0 0 12px rgba(0, 191, 255, .8))" : "none" }}
+              style={{ filter: remainingTime <= 0 ? "drop-shadow(0 0 12px rgba(0, 191, 255, .8))" : "none" }}
             />
             <circle cx={size/2} cy={size/2} r={r - 20} stroke="rgba(255,255,255,.08)" strokeWidth="1" fill="none" />
             <circle cx={size/2} cy={size/2} r={r - 40} stroke="rgba(255,255,255,.08)" strokeWidth="1" fill="none" />
@@ -133,7 +216,7 @@ export default function Page(){
             <div className="mt-2 text-[13px]">
               <p className="text-neon-blue font-medium">Balance: <span className="text-white">{balance.toFixed(2)} ROAR</span></p>
             </div>
-            <p className="mt-1 text-[12px] text-neon-blue/80 tracking-widest">{remaining>0 ? `${remainingParts.h}H : ${String(remainingParts.m).padStart(2,"0")}M : ${String(remainingParts.s).padStart(2,"0")}S` : "READY"}</p>
+            <p className="mt-1 text-[12px] text-neon-blue/80 tracking-widest">{remainingTime>0 ? `${remainingParts.h}H : ${String(remainingParts.m).padStart(2,"0")}M : ${String(remainingParts.s).padStart(2,"0")}S` : "READY"}</p>
           </div>
         </motion.div>
 
@@ -144,13 +227,18 @@ export default function Page(){
 
         {/* Claim button - solid (first mockup look) with tap feedback */}
         <motion.button
-          whileTap={{ scale: remaining>0 ? 1 : 0.98 }}
+          whileTap={{ scale: isClaiming ? 1 : 0.98 }}
           onClick={claim}
-          disabled={remaining>0}
+          disabled={isClaiming || remainingTime > 0}
           className={`mt-5 w-72 py-3 rounded-2xl font-semibold shadow-glow transition
-            ${remaining>0 ? "bg-slate-700/80 text-white/60" : "bg-neon-blue hover:bg-neon-blue/80 text-white"}`}
+            ${isClaiming || remainingTime > 0
+              ? "bg-slate-700/80 text-white/60 cursor-not-allowed"
+              : "bg-neon-blue hover:bg-neon-blue/80 text-white animate-glowPulse"
+            }`}
         >
-          Claim
+          {remainingTime > 0
+            ? `Next claim in: ${formatTime(remainingTime)}`
+            : "Claim"}
         </motion.button>
       </div>
 

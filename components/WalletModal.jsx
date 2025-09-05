@@ -1,11 +1,50 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
-import { TelegramIcon } from "./Icons"; // Assuming you have a TelegramIcon component
+import { TelegramIcon } from "./Icons";
+import { useTonConnectUI } from '@tonconnect/ui-react';
+import { useEffect } from 'react';
 
 export default function WalletModal({ isOpen, onClose }) {
+  const [tonConnectUI, wallet] = useTonConnectUI();
+
+  const sendWalletAddressToBackend = async (address) => {
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ address }),
+      });
+
+      if (response.ok) {
+        console.log('Wallet address sent to backend successfully!');
+      } else {
+        console.error('Failed to send wallet address to backend.');
+      }
+    } catch (error) {
+      console.error('Error sending wallet address to backend:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (wallet) {
+      console.log('Wallet connected:', wallet.address);
+      sendWalletAddressToBackend(wallet.address);
+    }
+  }, [wallet]);
+
   const handleConnect = () => {
-    console.log("Connecting to Telegram Wallet...");
-    onClose();
+    if (wallet) {
+      tonConnectUI.disconnect();
+    } else {
+      tonConnectUI.openConnect();
+    }
+  };
+
+  const shortenAddress = (address) => {
+    if (!address) return '';
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
   return (
@@ -27,13 +66,13 @@ export default function WalletModal({ isOpen, onClose }) {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-2xl font-bold mb-6">Connect Wallet</h2>
-            
+
             <button
               onClick={handleConnect}
               className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-neon-blue to-neon-purple text-white font-bold py-3 px-6 rounded-lg shadow-glow-neon-purple hover:scale-105 transform transition-transform duration-200"
             >
               <TelegramIcon />
-              Connect to Telegram Wallet
+              {wallet ? `${shortenAddress(wallet.address)} (Disconnect)` : "Connect to Telegram Wallet"}
             </button>
 
             <button

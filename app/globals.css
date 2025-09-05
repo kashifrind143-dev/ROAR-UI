@@ -20,3 +20,19 @@ body {
 .planet { filter: blur(0.2px); opacity: .9 }
 
 .glass { @apply bg-white/5 backdrop-blur-xl border border-white/10; }
+
+@keyframes glowPulse {
+  0% {
+    box-shadow: 0 0 5px rgba(0, 191, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 191, 255, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(0, 191, 255, 0.4);
+  }
+}
+
+.animate-glowPulse {
+  animation: glowPulse 2s linear infinite;
+}
