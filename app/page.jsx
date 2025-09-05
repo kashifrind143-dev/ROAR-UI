@@ -122,7 +122,7 @@ export default function Page(){
             <circle cx={size/2} cy={size/2} r={r} stroke="rgba(255,255,255,.08)" strokeWidth={stroke} fill="rgba(0,0,0,.6)"/>
             <circle cx={size/2} cy={size/2} r={r} stroke="url(#glow)" strokeWidth={stroke} fill="none"
               strokeDasharray={`${dash} ${circ-dash}`} strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`}
-              style={{ filter: "drop-shadow(0 0 12px rgba(0, 191, 255, .8))" }}
+              style={{ filter: remaining <= 0 ? "drop-shadow(0 0 12px rgba(0, 191, 255, .8))" : "none" }}
             />
             <circle cx={size/2} cy={size/2} r={r - 20} stroke="rgba(255,255,255,.08)" strokeWidth="1" fill="none" />
             <circle cx={size/2} cy={size/2} r={r - 40} stroke="rgba(255,255,255,.08)" strokeWidth="1" fill="none" />
@@ -133,7 +133,7 @@ export default function Page(){
             <div className="mt-2 text-[13px]">
               <p className="text-neon-blue font-medium">Balance: <span className="text-white">{balance.toFixed(2)} ROAR</span></p>
             </div>
-            <p className="mt-1 text-[12px] text-neon-blue/80 tracking-widest">Fill: {remaining>0 ? `${remainingParts.h}H : ${String(remainingParts.m).padStart(2,"0")}M : ${String(remainingParts.s).padStart(2,"0")}S` : "READY"}</p>
+            <p className="mt-1 text-[12px] text-neon-blue/80 tracking-widest">{remaining>0 ? `${remainingParts.h}H : ${String(remainingParts.m).padStart(2,"0")}M : ${String(remainingParts.s).padStart(2,"0")}S` : "READY"}</p>
           </div>
         </motion.div>
 
