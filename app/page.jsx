@@ -55,7 +55,7 @@ export default function Page(){
     if(data?.success){
       setBalance(b=> Number((b + storage).toFixed(6)));
       setStorage(0);
-      setTotalPoints(t=> Number((t + data.reward).toFixed(3)));
+      setTotalPoints(t=> Number((t + 10).toFixed(3)));
       const ts = Date.now();
       setLastClaim(ts);
       if (typeof window !== 'undefined') localStorage.setItem("lastClaim", String(ts));
@@ -68,7 +68,7 @@ export default function Page(){
   const r = (size - stroke)/2;
   const circ = 2*Math.PI*r;
   const cap = 1.0;
-  const progress = Math.min(1, storage/cap);
+  const progress = Math.min(1, 1 - remaining/FOUR_HOURS);
   const dash = circ * progress;
 
   return (
@@ -86,7 +86,7 @@ export default function Page(){
       <div className="px-4 pt-4 flex items-center justify-between">
         <button className="text-white/70">Cancel</button>
         <div className="text-center">
-          <p className="text-sm text-white/70 tracking-widest">ROAR.MINING</p>
+          <p className="text-sm text-white/70 tracking-widest">ROAR</p>
           <p className="text-[11px] text-white/40">bot</p>
         </div>
         <button className="text-white/70">•••</button>
@@ -98,7 +98,7 @@ export default function Page(){
           <img src={avatarUrl} alt="avatar" className="w-10 h-10 rounded-xl object-cover"/>
           <div className="flex-1">
             <p className="text-[13px] font-semibold">{username}</p>
-            <p className="text-[12px] text-cyan-300">Total: <span className="text-white">{totalPoints.toLocaleString()} ROAR</span></p>
+            <p className="text-[12px] text-cyan-300">Total: <span className="text-white">{totalPoints.toLocaleString()}</span></p>
           </div>
           <span className="text-white/50">›</span>
         </div>
@@ -150,7 +150,7 @@ export default function Page(){
           className={`mt-5 w-72 py-3 rounded-2xl font-semibold shadow-glow transition
             ${remaining>0 ? "bg-slate-700/80 text-white/60" : "bg-neon-blue hover:bg-neon-blue/80 text-white"}`}
         >
-          Claim ROAR
+          Claim
         </motion.button>
       </div>
 

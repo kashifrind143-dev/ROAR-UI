@@ -5,7 +5,7 @@ This project reproduces the **first mockup** UI exactly (dark, glowing orbit bac
 ## Features
 - Exact first-mockup styling (dark galaxy, glowing dial, orbit accents)
 - Subtle animations: dial micro-rotation, floating planets
-- Solid **Claim ROAR** button (tap feedback)
+- Solid **Claim** button (tap feedback)
 - Bottom nav order: Profile • Leaderboard • Mining (center) • Challenges • Wallet
 - Profile (username + avatar) + Total ROAR
 - Mock APIs: `/api/user`, `/api/leaderboard`, `/api/claim`
