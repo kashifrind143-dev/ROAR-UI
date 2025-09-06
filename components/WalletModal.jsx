@@ -62,22 +62,22 @@ export default function WalletModal({ isOpen, onClose }) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="bg-gray-900/80 border border-neon-blue/50 rounded-2xl shadow-glow-neon-blue w-full max-w-sm p-6 text-white text-center relative"
+              className="bg-[#111] border-4 border-cyan-300 rounded-2xl shadow-glow-neon-blue w-full max-w-sm p-6 text-white text-center relative"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-2xl font-bold mb-6">Connect Wallet</h2>
+            <h2 className="text-2xl font-bold mb-6">Connect to Telegram Wallet</h2>
 
             <button
               onClick={handleConnect}
-              className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-neon-blue to-neon-purple text-white font-bold py-3 px-6 rounded-lg shadow-glow-neon-purple hover:scale-105 transform transition-transform duration-200"
+              className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-neon-blue to-neon-purple text-white font-bold py-3 px-6 rounded-lg shadow-glow-neon-blue hover:scale-105 transform transition-transform duration-200"
             >
               <TelegramIcon />
-              {wallet ? `${shortenAddress(wallet.address)} (Disconnect)` : "Connect to Telegram Wallet"}
+              {wallet ? `Connected: ${shortenAddress(wallet.address)}` : "Connect to Telegram Wallet"}
             </button>
 
             <button
               onClick={onClose}
-              className="mt-4 text-white/70 hover:text-white transition-colors duration-200"
+              className="mt-4 text-white/70 hover:text-white font-bold transition-colors duration-200"
             >
               Cancel
             </button>
