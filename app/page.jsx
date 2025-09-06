@@ -154,6 +154,14 @@ export default function Page() {
     }
   };
 
+  const remainingParts = useMemo(() => {
+    const totalSeconds = Math.floor(remainingTime / 1000);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    return { h, m, s };
+  }, [remainingTime]);
+
   return (
     <div className="min-h-screen text-white relative overflow-hidden">
       {/* Background orbit and planets (subtle like first mockup) */}
@@ -169,7 +177,7 @@ export default function Page() {
       <div className="px-4 pt-4 flex items-center justify-between">
         <button className="text-white/70">Cancel</button>
         <div className="text-center">
-          <p className="text-sm text-white/70 tracking-widest">ROAR</p>
+          <p className="text-sm font-bold text-neon-blue tracking-widest [text-shadow:0_0_10px_#22d3ee]">ROAR</p>
           <p className="text-[11px] text-white/40">bot</p>
         </div>
         <button className="text-white/70">•••</button>

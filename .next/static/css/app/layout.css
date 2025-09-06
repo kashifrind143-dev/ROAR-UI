@@ -915,6 +915,9 @@ video {
 .duration-200 {
   transition-duration: 200ms;
 }
+.\[text-shadow\:0_0_10px_\#22d3ee\] {
+  text-shadow: 0 0 10px #22d3ee;
+}
 
 /* Dark galaxy background */
 body {
