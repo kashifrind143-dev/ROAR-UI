@@ -78,20 +78,6 @@ export default function WalletModal({ isOpen, onClose }) {
     }
   }, [tonConnectUI, connectionStatus]);
 
-  useEffect(() => {
-    const checkManifest = async () => {
-      try {
-        const response = await fetch('/tonconnect-manifest.json');
-        if (!response.ok) {
-          setErrorMessage('Configuration error: Wallet manifest not found.');
-        }
-      } catch (e) {
-        setErrorMessage('Configuration error: Wallet manifest not found.');
-      }
-    };
-
-    checkManifest();
-  }, []);
 
   const shortenAddress = (address) => {
     if (!address) return '';
