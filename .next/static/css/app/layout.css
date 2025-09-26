@@ -888,6 +888,10 @@ video {
 .text-white\/70 {
   color: rgb(255 255 255 / 0.7);
 }
+.text-red-500 {
+  --tw-text-opacity: 1;
+  color: rgb(239 68 68 / var(--tw-text-opacity));
+}
 .shadow-glow {
   --tw-shadow: 0 0 28px rgba(34,211,238,0.45);
   --tw-shadow-colored: 0 0 28px var(--tw-shadow-color);

@@ -2,12 +2,13 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { TelegramIcon } from "./Icons";
 import { useTonConnectUI } from '@tonconnect/ui-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 export default function WalletModal({ isOpen, onClose }) {
-  const [tonConnectUI, wallet, connectionStatus] = useTonConnectUI();
+  const [tonConnectUI, wallet, connectionStatus, setConnectionStatus] = useTonConnectUI();
   const [telegramInfo, setTelegramInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const sendUserDataToBackend = async (address, username, photo_url, telegramId) => {
     try {
@@ -27,30 +28,37 @@ export default function WalletModal({ isOpen, onClose }) {
       }
     } catch (error) {
       console.error('Error sending user data to backend:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const fetchTelegramInfo = useCallback(async () => {
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+      const telegramUser = window.Telegram.WebApp.initDataUnsafe.user;
+      setTelegramInfo({
+        id: telegramUser.id,
+        username: telegramUser.username,
+        photo_url: telegramUser.photo_url,
+      });
+
+      sendUserDataToBackend(wallet?.address, telegramUser.username, telegramUser.photo_url, telegramUser.id);
+    } else {
+      setTelegramInfo(null);
+    }
+  }, [wallet, sendUserDataToBackend]);
 
   useEffect(() => {
     if (wallet?.address) {
       console.log('Wallet connected:', wallet.address);
-
-      // Fetch Telegram info
-      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-        const telegramUser = window.Telegram.WebApp.initDataUnsafe.user;
-        setTelegramInfo({
-          id: telegramUser.id,
-          username: telegramUser.username,
-          photo_url: telegramUser.photo_url,
-        });
-
-        sendUserDataToBackend(wallet.address, telegramUser.username, telegramUser.photo_url, telegramUser.id);
-      }
+      fetchTelegramInfo();
     } else {
       setTelegramInfo(null);
     }
-  }, [wallet]);
+  }, [wallet, fetchTelegramInfo]);
 
- const handleConnect = async () => {
+  const handleConnect = useCallback(async () => {
+    setErrorMessage(null);
     if (connectionStatus === 'connected') {
       tonConnectUI.disconnect();
     } else {
@@ -59,11 +67,31 @@ export default function WalletModal({ isOpen, onClose }) {
         await tonConnectUI.connectWallet();
       } catch (e) {
         console.error(e);
+        if (e.message?.includes('Operation aborted')) {
+          setErrorMessage('Wallet connection cancelled, please try again.');
+        } else {
+          setErrorMessage('Failed to connect to wallet.');
+        }
       } finally {
         setIsLoading(false);
       }
     }
-  };
+  }, [tonConnectUI, connectionStatus]);
+
+  useEffect(() => {
+    const checkManifest = async () => {
+      try {
+        const response = await fetch('/tonconnect-manifest.json');
+        if (!response.ok) {
+          setErrorMessage('Configuration error: Wallet manifest not found.');
+        }
+      } catch (e) {
+        setErrorMessage('Configuration error: Wallet manifest not found.');
+      }
+    };
+
+    checkManifest();
+  }, []);
 
   const shortenAddress = (address) => {
     if (!address) return '';
@@ -98,27 +126,29 @@ export default function WalletModal({ isOpen, onClose }) {
               {connectionStatus === 'connected' ? `Disconnect ${shortenAddress(wallet?.address)}` : "Connect to Telegram Wallet"}
             </button>
 
-{isLoading ? (
-  <p className="mt-4">Connecting...</p>
-) : connectionStatus === 'connected' && wallet?.address ? (
-  <div className="mt-4">
-    {window.Telegram && window.Telegram.WebApp && telegramInfo ? (
-      <>
-        {telegramInfo.photo_url && (
-          <img
-            src={telegramInfo.photo_url}
-            alt="Telegram Profile"
-            className="rounded-full w-12 h-12 mx-auto mb-2"
-          />
-        )}
-        <p>Telegram: @{telegramInfo.username}</p>
-      </>
-    ) : (
-      <p>Telegram user information missing.</p>
-    )}
-    <p>Wallet: {shortenAddress(wallet.address)}</p>
-  </div>
-) : null}
+            {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
+
+            {isLoading && <p className="mt-4">Connecting...</p>}
+
+            {connectionStatus === 'connected' && wallet?.address && (
+              <div className="mt-4">
+                {window.Telegram && window.Telegram.WebApp && telegramInfo ? (
+                  <>
+                    {telegramInfo.photo_url && (
+                      <img
+                        src={telegramInfo.photo_url}
+                        alt="Telegram Profile"
+                        className="rounded-full w-12 h-12 mx-auto mb-2"
+                      />
+                    )}
+                    <p>Telegram: @{telegramInfo.username}</p>
+                  </>
+                ) : (
+                  <p>Telegram user information missing.</p>
+                )}
+                <p>Wallet: {shortenAddress(wallet.address)}</p>
+              </div>
+            )}
 
             <button
               onClick={onClose}
