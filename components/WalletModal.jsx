@@ -7,9 +7,11 @@ import { useEffect, useState } from 'react';
 export default function WalletModal({ isOpen, onClose }) {
   const [tonConnectUI, wallet, connectionStatus] = useTonConnectUI();
   const [telegramInfo, setTelegramInfo] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const sendUserDataToBackend = async (address, username, photo_url, telegramId) => {
     try {
+      setIsLoading(true);
       const response = await fetch('/api/saveUser', {
         method: 'POST',
         headers: {
@@ -29,7 +31,7 @@ export default function WalletModal({ isOpen, onClose }) {
   };
 
   useEffect(() => {
-    if (wallet) {
+    if (wallet?.address) {
       console.log('Wallet connected:', wallet.address);
 
       // Fetch Telegram info
@@ -53,9 +55,12 @@ export default function WalletModal({ isOpen, onClose }) {
       tonConnectUI.disconnect();
     } else {
       try {
+        setIsLoading(true);
         await tonConnectUI.connectWallet();
       } catch (e) {
         console.error(e);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -90,10 +95,12 @@ export default function WalletModal({ isOpen, onClose }) {
               className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-neon-blue to-neon-purple text-white font-bold py-3 px-6 rounded-lg shadow-glow-neon-blue hover:scale-105 transform transition-transform duration-200"
             >
               <TelegramIcon />
-              {connectionStatus === 'connected' ? `Disconnect ${shortenAddress(wallet.address)}` : "Connect to Telegram Wallet"}
+              {connectionStatus === 'connected' ? `Disconnect ${shortenAddress(wallet?.address)}` : "Connect to Telegram Wallet"}
             </button>
 
-{connectionStatus === 'connected' ? (
+{isLoading ? (
+  <p className="mt-4">Connecting...</p>
+) : connectionStatus === 'connected' && wallet?.address ? (
   <div className="mt-4">
     {window.Telegram && window.Telegram.WebApp && telegramInfo ? (
       <>
