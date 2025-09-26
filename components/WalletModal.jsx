@@ -48,11 +48,15 @@ export default function WalletModal({ isOpen, onClose }) {
     }
   }, [wallet]);
 
-  const handleConnect = () => {
+ const handleConnect = async () => {
     if (connectionStatus === 'connected') {
       tonConnectUI.disconnect();
     } else {
-      tonConnectUI.openConnect();
+      try {
+        await tonConnectUI.connectWallet();
+      } catch (e) {
+        console.error(e);
+      }
     }
   };
 
@@ -89,15 +93,25 @@ export default function WalletModal({ isOpen, onClose }) {
               {connectionStatus === 'connected' ? `Disconnect ${shortenAddress(wallet.address)}` : "Connect to Telegram Wallet"}
             </button>
 
-            {connectionStatus === 'connected' && telegramInfo && window.Telegram && window.Telegram.WebApp ? (
-              <div className="mt-4">
-                {telegramInfo.photo_url && <img src={telegramInfo.photo_url} alt="Telegram Profile" className="rounded-full w-12 h-12 mx-auto mb-2" />}
-                <p>Telegram: @{telegramInfo.username}</p>
-                <p>Wallet: {shortenAddress(wallet.address)}</p>
-              </div>
-            ) : connectionStatus === 'connected' && window.Telegram && window.Telegram.WebApp ? (
-              <p className="mt-4">Telegram user information missing.</p>
-            ) : null}
+{connectionStatus === 'connected' ? (
+  <div className="mt-4">
+    {window.Telegram && window.Telegram.WebApp && telegramInfo ? (
+      <>
+        {telegramInfo.photo_url && (
+          <img
+            src={telegramInfo.photo_url}
+            alt="Telegram Profile"
+            className="rounded-full w-12 h-12 mx-auto mb-2"
+          />
+        )}
+        <p>Telegram: @{telegramInfo.username}</p>
+      </>
+    ) : (
+      <p>Telegram user information missing.</p>
+    )}
+    <p>Wallet: {shortenAddress(wallet.address)}</p>
+  </div>
+) : null}
 
             <button
               onClick={onClose}
