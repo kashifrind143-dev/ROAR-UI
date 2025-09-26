@@ -67,7 +67,7 @@ export default function WalletModal({ isOpen, onClose }) {
         await tonConnectUI.connectWallet();
       } catch (e) {
         console.error(e);
-        if (e.message?.includes('Operation aborted')) {
+        if (e?.message?.includes('Operation aborted')) {
           setErrorMessage('Wallet connection cancelled, please try again.');
         } else {
           setErrorMessage('Failed to connect to wallet.');
@@ -77,7 +77,6 @@ export default function WalletModal({ isOpen, onClose }) {
       }
     }
   }, [tonConnectUI, connectionStatus]);
-
 
   const shortenAddress = (address) => {
     if (!address) return '';
