@@ -3,12 +3,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { TelegramIcon } from "./Icons";
 import { useTonConnectUI } from '@tonconnect/ui-react';
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function WalletModal({ isOpen, onClose }) {
-  const [tonConnectUI, wallet, connectionStatus, setConnectionStatus] = useTonConnectUI();
+  const [tonConnectUI, wallet, connectionStatus, setConnectionStatus] = useTonConnectUI({
+    onStatusChange: (newStatus) => {
+      if (newStatus === 'connected') {
+        router.push('/dashboard');
+      }
+    },
+  });
   const [telegramInfo, setTelegramInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const router = useRouter();
 
   const sendUserDataToBackend = async (address, username, photo_url, telegramId) => {
     try {
@@ -74,9 +82,12 @@ export default function WalletModal({ isOpen, onClose }) {
         }
       } finally {
         setIsLoading(false);
+        if (connectionStatus === 'connected') {
+          router.push('/dashboard');
+        }
       }
     }
-  }, [tonConnectUI, connectionStatus]);
+  }, [tonConnectUI, connectionStatus, router]);
 
   const shortenAddress = (address) => {
     if (!address) return '';
